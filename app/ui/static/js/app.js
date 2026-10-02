@@ -1,6 +1,5 @@
 /**
  * NETPHISH — Cybersecurity Operations Client Script
- * Author: Hrudyansh Kayastha
  */
 
 // Application State
