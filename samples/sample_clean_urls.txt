@@ -1,0 +1,6 @@
+# Clean Benign Demonstration URLs
+https://www.google.com
+https://github.com/torvalds/linux
+https://docs.python.org/3/library/urllib.parse.html
+https://en.wikipedia.org/wiki/Computer_security
+https://stackoverflow.com/questions/tagged/python

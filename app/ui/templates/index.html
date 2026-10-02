@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NETPHISH — Network Threat &amp; Phishing Analysis Platform</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand-badge">
+                    <span class="brand-icon">🛡️</span>
+                    <div class="brand-info">
+                        <span class="brand-name">NETPHISH</span>
+                        <span class="brand-tag">SECURITY INTELLIGENCE</span>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="nav-menu">
+                <div class="nav-section-label">OPERATIONS</div>
+                <button class="nav-item active" data-view="dashboard">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">SOC Dashboard</span>
+                </button>
+                <button class="nav-item" data-view="url-analysis">
+                    <span class="nav-icon">🔗</span>
+                    <span class="nav-text">URL Threat Analyzer</span>
+                </button>
+                <button class="nav-item" data-view="pcap-analysis">
+                    <span class="nav-icon">📦</span>
+                    <span class="nav-text">PCAP Flow Analyzer</span>
+                </button>
+                <button class="nav-item" data-view="analyses-history">
+                    <span class="nav-icon">📑</span>
+                    <span class="nav-text">Analyses History</span>
+                </button>
+
+                <div class="nav-section-label">INTELLIGENCE &amp; CASES</div>
+                <button class="nav-item" data-view="ioc-intelligence">
+                    <span class="nav-icon">🎯</span>
+                    <span class="nav-text">IOC Intelligence</span>
+                </button>
+                <button class="nav-item" data-view="investigations">
+                    <span class="nav-icon">📂</span>
+                    <span class="nav-text">Investigations</span>
+                </button>
+                <button class="nav-item" data-view="architecture">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-text">Platform Reference</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="security-officer">
+                    <div class="officer-avatar">HK</div>
+                    <div class="officer-details">
+                        <span class="officer-name">Hrudyansh Kayastha</span>
+                        <span class="officer-role">Security Lead / Author</span>
+                    </div>
+                </div>
+                <div class="engine-status">
+                    <span class="status-dot"></span>
+                    <span>Heuristics Engine Active</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top App Bar -->
+            <header class="topbar">
+                <div class="page-title-group">
+                    <h1 id="current-view-title">SOC Dashboard</h1>
+                    <span class="system-environment">OFFLINE DETERMINISTIC ENVIRONMENT</span>
+                </div>
+                <div class="topbar-actions">
+                    <button class="btn btn-outline" id="refresh-data-btn">🔄 Refresh Telemetry</button>
+                    <a href="/docs" target="_blank" class="btn btn-outline">📖 OpenAPI Specs</a>
+                </div>
+            </header>
+
+            <div class="content-scroll">
+                <!-- 1. SOC DASHBOARD VIEW -->
+                <section id="view-dashboard" class="view-panel active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon-wrap blue">📈</div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="stat-total-analyses">0</div>
+                                <div class="stat-label">Total Analyses</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon-wrap cyan">🔗</div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="stat-url-analyses">0</div>
+                                <div class="stat-label">URL Assessments</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon-wrap purple">📦</div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="stat-pcap-analyses">0</div>
+                                <div class="stat-label">PCAP Ingestions</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon-wrap red">⚠️</div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="stat-critical-detections">0</div>
+                                <div class="stat-label">Critical Findings</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon-wrap amber">🎯</div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="stat-total-iocs">0</div>
+                                <div class="stat-label">Normalized IOCs</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon-wrap green">📂</div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="stat-active-investigations">0</div>
+                                <div class="stat-label">Active Dossiers</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-charts-grid">
+                        <div class="panel-card">
+                            <div class="card-header">
+                                <h3>Threat Severity Distribution</h3>
+                            </div>
+                            <div class="canvas-container">
+                                <canvas id="chart-severity" width="360" height="200"></canvas>
+                            </div>
+                        </div>
+                        <div class="panel-card">
+                            <div class="card-header">
+                                <h3>Analysis Posture Breakdown</h3>
+                            </div>
+                            <div class="canvas-container">
+                                <canvas id="chart-posture" width="360" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel-card">
+                        <div class="card-header flex-between">
+                            <h3>Recent Threat Analyses</h3>
+                            <button class="btn btn-sm btn-outline" onclick="switchView('analyses-history')">View All</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table" id="dashboard-recent-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Type</th>
+                                        <th>Target / File</th>
+                                        <th>Risk Score</th>
+                                        <th>Severity</th>
+                                        <th>Detections</th>
+                                        <th>Timestamp</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td colspan="8" class="text-center">Loading recent records...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. URL THREAT ANALYZER VIEW -->
+                <section id="view-url-analysis" class="view-panel">
+                    <div class="panel-card">
+                        <div class="card-header">
+                            <h3>Static Offline Phishing &amp; Deception Analysis</h3>
+                            <p class="card-desc">Zero-network static parsing, 15 lexical heuristics, domain decomposition, and brand mismatch detection.</p>
+                        </div>
+                        <div class="analysis-input-group">
+                            <label for="url-input-field">Target Uniform Resource Locator (URL):</label>
+                            <div class="input-with-button">
+                                <input type="text" id="url-input-field" placeholder="e.g. http://192.168.1.10:8080/secure-update/login.php?user=admin" />
+                                <button class="btn btn-primary" id="btn-submit-url">⚡ Analyze Target</button>
+                            </div>
+                        </div>
+
+                        <div class="samples-pill-box">
+                            <span class="samples-label">Load Synthetic Sample:</span>
+                            <button class="pill-btn danger" onclick="loadSampleUrl('http://192.168.1.50:8080/paypal-update/verification/login.php?client=admin')">IP Host Lure (High)</button>
+                            <button class="pill-btn danger" onclick="loadSampleUrl('https://paypal.com.verify-billing.account-security.xyz/secure/login')">Subdomain Deception (High)</button>
+                            <button class="pill-btn warning" onclick="loadSampleUrl('http://tinyurl.com/update-account-security-alert')">Shortener + Keyword (Medium)</button>
+                            <button class="pill-btn success" onclick="loadSampleUrl('https://www.google.com/search?q=cybersecurity+defense')">Google Search (Clean)</button>
+                        </div>
+                    </div>
+
+                    <!-- URL Results Container -->
+                    <div id="url-results-container" class="results-container hidden">
+                        <div class="score-banner-card" id="url-score-banner">
+                            <div class="score-display">
+                                <div class="score-number" id="url-res-score">0</div>
+                                <div class="score-meta">
+                                    <span class="score-badge" id="url-res-badge">LOW</span>
+                                    <span class="score-label">Phishing Probability Index</span>
+                                </div>
+                            </div>
+                            <div class="score-summary-text" id="url-res-summary">
+                                Summary placeholder.
+                            </div>
+                        </div>
+
+                        <div class="dual-grid">
+                            <div class="panel-card">
+                                <div class="card-header">
+                                    <h3>Lexical &amp; Structural Feature Extraction</h3>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="data-table" id="url-features-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Feature</th>
+                                                <th>Observed Value</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="panel-card">
+                                <div class="card-header">
+                                    <h3>Rule Evaluations &amp; Score Contribution</h3>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="data-table" id="url-factors-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Factor / Heuristic</th>
+                                                <th>Points</th>
+                                                <th>Rationale</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel-card">
+                            <div class="card-header">
+                                <h3>Extracted Indicators of Compromise (IOCs)</h3>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="data-table" id="url-iocs-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Type</th>
+                                            <th>Canonical Value</th>
+                                            <th>Confidence</th>
+                                            <th>Scope / Classification</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. PCAP FLOW ANALYZER VIEW -->
+                <section id="view-pcap-analysis" class="view-panel">
+                    <div class="panel-card">
+                        <div class="card-header">
+                            <h3>Offline PCAP Packet &amp; Flow Threat Analyzer</h3>
+                            <p class="card-desc">Extracts 5-tuple logical connection flows, session metrics, TCP flags, port scanning, beaconing periodicity, and DNS anomalies using Scapy.</p>
+                        </div>
+
+                        <div class="upload-dropzone" id="pcap-dropzone">
+                            <input type="file" id="pcap-file-input" accept=".pcap,.pcapng,.cap" style="display:none;" />
+                            <div class="dropzone-content" onclick="document.getElementById('pcap-file-input').click()">
+                                <div class="drop-icon">📦</div>
+                                <h4>Drag &amp; Drop PCAP Capture Here or Click to Browse</h4>
+                                <p>Supports .pcap, .pcapng, and .cap files (Max size: 25 MB). Analyzed completely offline.</p>
+                            </div>
+                        </div>
+
+                        <div class="samples-pill-box">
+                            <span class="samples-label">Test Synthetic PCAP Samples:</span>
+                            <span id="pcap-samples-buttons">Loading samples...</span>
+                        </div>
+                    </div>
+
+                    <!-- PCAP Results Container -->
+                    <div id="pcap-results-container" class="results-container hidden">
+                        <div class="score-banner-card" id="pcap-score-banner">
+                            <div class="score-display">
+                                <div class="score-number" id="pcap-res-score">0</div>
+                                <div class="score-meta">
+                                    <span class="score-badge" id="pcap-res-badge">LOW</span>
+                                    <span class="score-label">Network Threat Severity Index</span>
+                                </div>
+                            </div>
+                            <div class="score-summary-text" id="pcap-res-summary">
+                                Summary placeholder.
+                            </div>
+                        </div>
+
+                        <div class="metrics-row">
+                            <div class="metric-box">
+                                <span class="label">SHA-256 Hash</span>
+                                <code id="pcap-res-hash">-</code>
+                            </div>
+                            <div class="metric-box">
+                                <span class="label">Packets</span>
+                                <span class="val" id="pcap-res-packets">0</span>
+                            </div>
+                            <div class="metric-box">
+                                <span class="label">Logical Flows</span>
+                                <span class="val" id="pcap-res-flows">0</span>
+                            </div>
+                            <div class="metric-box">
+                                <span class="label">Duration</span>
+                                <span class="val" id="pcap-res-duration">0.0s</span>
+                            </div>
+                        </div>
+
+                        <div class="panel-card">
+                            <div class="card-header">
+                                <h3>Network Threat Heuristic Detections</h3>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="data-table" id="pcap-detections-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Severity</th>
+                                            <th>Heuristic Rule</th>
+                                            <th>Source IP</th>
+                                            <th>Target IP</th>
+                                            <th>Evidence / Technical Observation</th>
+                                            <th>Weight</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="panel-card">
+                            <div class="card-header flex-between">
+                                <h3>Aggregated 5-Tuple Connection Flows</h3>
+                                <input type="text" id="flow-filter-input" placeholder="Filter by IP or Port..." class="input-sm" />
+                            </div>
+                            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                <table class="data-table" id="pcap-flows-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Source</th>
+                                            <th>Destination</th>
+                                            <th>Protocol</th>
+                                            <th>Packets</th>
+                                            <th>Bytes</th>
+                                            <th>Duration</th>
+                                            <th>Flags</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. ANALYSES HISTORY VIEW -->
+                <section id="view-analyses-history" class="view-panel">
+                    <div class="panel-card">
+                        <div class="card-header flex-between">
+                            <div>
+                                <h3>Forensic Analyses Log</h3>
+                                <p class="card-desc">All offline URL and PCAP triage runs stored locally in the relational database.</p>
+                            </div>
+                            <div class="filter-controls">
+                                <select id="history-type-filter" class="select-sm">
+                                    <option value="">All Types</option>
+                                    <option value="URL">URL Only</option>
+                                    <option value="PCAP">PCAP Only</option>
+                                </select>
+                                <select id="history-severity-filter" class="select-sm">
+                                    <option value="">All Severities</option>
+                                    <option value="CRITICAL">Critical</option>
+                                    <option value="HIGH">High</option>
+                                    <option value="MEDIUM">Medium</option>
+                                    <option value="LOW">Low</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="data-table" id="history-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Type</th>
+                                        <th>Target / File</th>
+                                        <th>Risk Score</th>
+                                        <th>Severity</th>
+                                        <th>Detections</th>
+                                        <th>Timestamp</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5. IOC THREAT INTELLIGENCE VIEW -->
+                <section id="view-ioc-intelligence" class="view-panel">
+                    <div class="panel-card">
+                        <div class="card-header flex-between">
+                            <div>
+                                <h3>Normalized Indicators of Compromise (IOC Inventory)</h3>
+                                <p class="card-desc">Canonical IPv4 (with RFC scope categorization), domains, URLs, hashes, and emails extracted across evidence.</p>
+                            </div>
+                            <div class="filter-controls">
+                                <input type="text" id="ioc-search-input" placeholder="Search indicator..." class="input-sm" />
+                                <select id="ioc-type-filter" class="select-sm">
+                                    <option value="">All Types</option>
+                                    <option value="IPv4">IPv4</option>
+                                    <option value="DOMAIN">DOMAIN</option>
+                                    <option value="URL">URL</option>
+                                    <option value="HASH">HASH</option>
+                                    <option value="EMAIL">EMAIL</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="data-table" id="iocs-master-table">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Canonical Value</th>
+                                        <th>Provenance Vector</th>
+                                        <th>Confidence</th>
+                                        <th>Scope / Classification</th>
+                                        <th>Linked Analysis ID</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 6. INVESTIGATIONS VIEW -->
+                <section id="view-investigations" class="view-panel">
+                    <div class="panel-card">
+                        <div class="card-header flex-between">
+                            <div>
+                                <h3>Investigation Dossiers &amp; Case Management</h3>
+                                <p class="card-desc">Correlate disparate URL and PCAP analyses to discover shared IOCs, temporal overlap, and composite risk scoring.</p>
+                            </div>
+                            <button class="btn btn-primary" id="btn-open-create-inv-modal">➕ New Investigation Case</button>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="data-table" id="investigations-table">
+                                <thead>
+                                    <tr>
+                                        <th>Case ID</th>
+                                        <th>Title</th>
+                                        <th>Status</th>
+                                        <th>Composite Risk</th>
+                                        <th>Severity</th>
+                                        <th>Analyses</th>
+                                        <th>Correlations</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Single Investigation Dossier Detailed Display -->
+                    <div id="investigation-detail-container" class="results-container hidden">
+                        <div class="score-banner-card" id="inv-banner">
+                            <div class="score-display">
+                                <div class="score-number" id="inv-score">0</div>
+                                <div class="score-meta">
+                                    <span class="score-badge" id="inv-badge">LOW</span>
+                                    <span class="score-label">Consolidated Case Risk Score</span>
+                                </div>
+                            </div>
+                            <div class="score-summary-text">
+                                <h3 id="inv-detail-title">Case Title</h3>
+                                <p id="inv-detail-explanation">Case explanation.</p>
+                                <div class="inv-actions-toolbar">
+                                    <button class="btn btn-sm btn-outline" id="btn-export-json">💾 Export JSON Forensic Dossier</button>
+                                    <button class="btn btn-sm btn-primary" id="btn-export-html">📄 Generate Standalone HTML Report</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel-card">
+                            <div class="card-header">
+                                <h3>Cross-Source &amp; Temporal Correlation Evidence</h3>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="data-table" id="inv-correlations-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Correlation Rule</th>
+                                            <th>Pivot IOC</th>
+                                            <th>Source Vectors</th>
+                                            <th>Evidence Synthesis</th>
+                                            <th>Offset</th>
+                                            <th>Score</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="panel-card">
+                            <div class="card-header">
+                                <h3>Chronological Attack Progression Timeline</h3>
+                            </div>
+                            <div id="inv-timeline-container" class="timeline-stream"></div>
+                        </div>
+
+                        <div class="panel-card">
+                            <div class="card-header">
+                                <h3>Defensive Mitigation &amp; Remediation Guidance</h3>
+                            </div>
+                            <ul class="recs-list" id="inv-recs-list"></ul>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 7. PLATFORM ARCHITECTURE & REFERENCE VIEW -->
+                <section id="view-architecture" class="view-panel">
+                    <div class="panel-card">
+                        <div class="card-header">
+                            <h3>Platform Architecture &amp; Detection Engineering</h3>
+                            <p class="card-desc">Detailed design specifications of the NetPhish deterministic security engine.</p>
+                        </div>
+
+                        <div class="architecture-grid">
+                            <div class="arch-box">
+                                <h4>1. Static URL Phishing Pipeline</h4>
+                                <ul>
+                                    <li><strong>Offline Lexical Parser:</strong> Decomposes URL scheme, host, port, path, query, fragment without outbound network transmission.</li>
+                                    <li><strong>15 Security Features:</strong> Evaluates IP hostnames, unencrypted transport, long URLs (>75 chars), deep subdomains (≥3), authentication keywords, URL shorteners, punycode/IDN, high-risk TLDs, special character density, and brand mismatch.</li>
+                                    <li><strong>Deterministic Scoring:</strong> Transparent points accumulation mapped to LOW, MEDIUM, HIGH, CRITICAL.</li>
+                                </ul>
+                            </div>
+
+                            <div class="arch-box">
+                                <h4>2. PCAP Traffic &amp; Flow Engine</h4>
+                                <ul>
+                                    <li><strong>Scapy Capture Ingestion:</strong> Reads `.pcap` and `.pcapng` files offline, calculates SHA-256 integrity hash.</li>
+                                    <li><strong>5-Tuple Flow Aggregation:</strong> Combines packets into bidirectional `(src_ip, dst_ip, src_port, dst_port, protocol)` sessions.</li>
+                                    <li><strong>Behavioral Heuristics:</strong> Horizontal/vertical port scan (≥10 unique ports), connection bursts (≥50 conns/10s), periodic beaconing ($CV \le 0.35$), ICMP burst (≥20 pkts/10s), non-standard ports, and DNS length/numeric anomalies.</li>
+                                </ul>
+                            </div>
+
+                            <div class="arch-box">
+                                <h4>3. Multi-Source Correlation</h4>
+                                <ul>
+                                    <li><strong>Shared Indicator Matching:</strong> Links URL host IP with PCAP destination IP, URL domain with DNS queries, and URL hostname with HTTP Host headers.</li>
+                                    <li><strong>Temporal Alignment:</strong> Identifies events occurring within a configurable $\pm 5$-minute sliding window.</li>
+                                    <li><strong>Attack Graph Mapping:</strong> Tracks progression: `URL → DOMAIN → DNS → IP → FLOW → DETECTION`.</li>
+                                </ul>
+                            </div>
+
+                            <div class="arch-box">
+                                <h4>4. Unified Risk Engine</h4>
+                                <ul>
+                                    <li><strong>Formula:</strong> $\text{Risk} = \min(100, \text{URL}(40) + \text{PCAP}(40) + \text{IOC Correlated}(15) + \text{Temporal Proximity}(15))$.</li>
+                                    <li><strong>Zero Double-Counting:</strong> Normalizes overlapping signals to prevent inflated risk postures.</li>
+                                    <li><strong>Audit Transparency:</strong> Every point is accompanied by rule IDs, evidence strings, and timestamps.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Create Investigation Modal -->
+    <div id="modal-create-investigation" class="modal-backdrop hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Create New Investigation Case</h3>
+                <button class="close-btn" onclick="closeCreateInvModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="inv-title-input">Case Title:</label>
+                    <input type="text" id="inv-title-input" placeholder="e.g. Credential Phishing &amp; Reconnaissance Incident" />
+                </div>
+                <div class="form-group">
+                    <label for="inv-desc-input">Analyst Context / Summary:</label>
+                    <textarea id="inv-desc-input" rows="3" placeholder="Provide analyst notes or incident context..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Select Analyses to Link &amp; Correlate:</label>
+                    <div id="inv-analyses-selector" class="analyses-checkbox-list">
+                        Loading analyses...
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeCreateInvModal()">Cancel</button>
+                <button class="btn btn-primary" id="btn-submit-create-inv">Correlate &amp; Create Case</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

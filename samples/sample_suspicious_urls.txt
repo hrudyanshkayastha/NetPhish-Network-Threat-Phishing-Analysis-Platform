@@ -1,0 +1,7 @@
+# Suspicious Phishing Demonstration URLs
+http://203.0.113.50/login/verify
+http://secure.account.verification.update-portal.bank.xyz/signin
+http://paypal.com.accounts-security-verify.top/auth/login.php
+http://192.168.1.10/banking/authenticate?token=secret123
+http://tinyurl.com/secure-login-account
+http://xn--microsft-e1a.xyz/update/password
