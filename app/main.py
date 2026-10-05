@@ -19,6 +19,7 @@ from app.config import (
     APP_VERSION,
     UI_STATIC_DIR,
     UI_TEMPLATES_DIR,
+    SAMPLES_DIR,
 )
 from app.database import init_db
 from app.api.routes import router
@@ -58,6 +59,10 @@ app.include_router(router)
 # Mount static asset directory if it exists
 if UI_STATIC_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(UI_STATIC_DIR)), name="static")
+
+# Mount synthetic PCAP and URL samples directory
+if SAMPLES_DIR.exists():
+    app.mount("/samples", StaticFiles(directory=str(SAMPLES_DIR)), name="samples")
 
 
 @app.get("/", include_in_schema=False)

@@ -11,8 +11,8 @@ const state = {
     iocs: [],
 };
 
-// DOM Content Loaded
-document.addEventListener('DOMContentLoaded', () => {
+// Application Initialization
+function initApp() {
     initNavigation();
     initUrlAnalyzer();
     initPcapAnalyzer();
@@ -22,10 +22,19 @@ document.addEventListener('DOMContentLoaded', () => {
     loadDashboardData();
     loadSamplesList();
 
-    document.getElementById('refresh-data-btn').addEventListener('click', () => {
-        loadDashboardData();
-    });
-});
+    const refreshBtn = document.getElementById('refresh-data-btn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', () => {
+            loadDashboardData();
+        });
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    initApp();
+}
 
 // Navigation Handling
 function initNavigation() {
@@ -86,25 +95,44 @@ async function loadDashboardData() {
         if (statsRes.ok) {
             const stats = await statsRes.json();
             state.stats = stats;
-            document.getElementById('stat-total-analyses').innerText = stats.total_analyses;
-            document.getElementById('stat-url-analyses').innerText = stats.url_analyses;
-            document.getElementById('stat-pcap-analyses').innerText = stats.pcap_analyses;
-            document.getElementById('stat-critical-detections').innerText = stats.critical_detections;
-            document.getElementById('stat-total-iocs').innerText = stats.total_iocs;
-            document.getElementById('stat-active-investigations').innerText = stats.active_investigations;
+            const elTotal = document.getElementById('stat-total-analyses');
+            if (elTotal) elTotal.innerText = stats.total_analyses ?? 0;
+            const elUrl = document.getElementById('stat-url-analyses');
+            if (elUrl) elUrl.innerText = stats.url_analyses ?? 0;
+            const elPcap = document.getElementById('stat-pcap-analyses');
+            if (elPcap) elPcap.innerText = stats.pcap_analyses ?? 0;
+            const elCrit = document.getElementById('stat-critical-detections');
+            if (elCrit) elCrit.innerText = stats.critical_detections ?? 0;
+            const elIocs = document.getElementById('stat-total-iocs');
+            if (elIocs) elIocs.innerText = stats.total_iocs ?? 0;
+            const elInvs = document.getElementById('stat-active-investigations');
+            if (elInvs) elInvs.innerText = stats.active_investigations ?? 0;
 
-            drawSeverityChart(stats);
-            drawPostureChart(stats);
+            try { drawSeverityChart(stats); } catch (e) { console.error('Severity chart error:', e); }
+            try { drawPostureChart(stats); } catch (e) { console.error('Posture chart error:', e); }
         }
+    } catch (err) {
+        console.error('Failed to load stats:', err);
+    }
 
+    try {
         const analysesRes = await fetch('/api/analyses?limit=6');
         if (analysesRes.ok) {
             const analyses = await analysesRes.json();
             state.recentAnalyses = analyses;
             renderRecentAnalysesTable(analyses);
+        } else {
+            const tbody = document.querySelector('#dashboard-recent-table tbody');
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center">No forensic analyses recorded yet. Run a URL or PCAP assessment.</td></tr>';
+            }
         }
     } catch (err) {
-        console.error('Failed to load dashboard data:', err);
+        console.error('Failed to load recent analyses:', err);
+        const tbody = document.querySelector('#dashboard-recent-table tbody');
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center">No forensic analyses recorded yet. Run a URL or PCAP assessment.</td></tr>';
+        }
     }
 }
 
@@ -747,11 +775,16 @@ function drawSeverityChart(stats) {
         const h = (val / maxVal) * chartHeight;
         const x = startX + idx * (barWidth + gap);
         const y = baseY - h;
+        const safeH = Math.max(0, h);
 
         // Bar
         ctx.fillStyle = colors[idx];
         ctx.beginPath();
-        ctx.roundRect(x, y, barWidth, h, [4, 4, 0, 0]);
+        if (typeof ctx.roundRect === 'function' && safeH > 0) {
+            ctx.roundRect(x, y, barWidth, safeH, [4, 4, 0, 0]);
+        } else {
+            ctx.rect(x, y, barWidth, safeH);
+        }
         ctx.fill();
 
         // Label
@@ -773,13 +806,12 @@ function drawPostureChart(stats) {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    const totalAnalyses = stats.total_analyses || 1;
     const urlCount = stats.url_analyses || 0;
     const pcapCount = stats.pcap_analyses || 0;
 
     const data = [
-        { label: 'URL Assessments', value: urlCount || 1, color: '#00e5ff' },
-        { label: 'PCAP Ingestions', value: pcapCount || 1, color: '#3b82f6' },
+        { label: 'URL Assessments', value: urlCount, color: '#00e5ff' },
+        { label: 'PCAP Ingestions', value: pcapCount, color: '#3b82f6' },
     ];
 
     const centerX = 100;
@@ -787,9 +819,24 @@ function drawPostureChart(stats) {
     const radius = 65;
 
     let totalVal = data.reduce((acc, d) => acc + d.value, 0);
+    if (totalVal === 0) {
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+        ctx.strokeStyle = '#374151';
+        ctx.lineWidth = 14;
+        ctx.stroke();
+
+        ctx.fillStyle = '#64748b';
+        ctx.font = '11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('No data yet', centerX, centerY + 4);
+        return;
+    }
+
     let startAngle = -Math.PI / 2;
 
     data.forEach(item => {
+        if (item.value <= 0) return;
         const sliceAngle = (item.value / totalVal) * (2 * Math.PI);
         ctx.beginPath();
         ctx.moveTo(centerX, centerY);
